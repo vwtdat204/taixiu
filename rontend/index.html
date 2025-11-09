@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tài Xỉu - Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="top-left">
+        <button id="btnRegister">Đăng ký</button>
+        <button id="btnLogin">Đăng nhập</button>
+      </div>
+      <div class="top-right">
+        <span id="usernameDisplay">Khách</span>
+        <span id="balanceDisplay">0</span>
+      </div>
+    </header>
+
+    <main>
+      <aside class="left-panel">
+        <button id="btnNap">NẠP</button>
+        <button id="btnRut">RÚT</button>
+      </aside>
+
+      <section class="game-area">
+        <div class="table">
+          <div class="center-circle">
+            <div class="circle-bg">
+              <div class="dice-sum" id="diceSum">-</div>
+              <div class="result-badge" id="resultBadge">-</div>
+            </div>
+
+            <div class="bet-buttons">
+              <button class="bet" data-choice="TAI">TÀI<br><span class="amount" id="taiTotal">0</span></button>
+              <button class="bet" data-choice="XIU">XỈU<br><span class="amount" id="xiuTotal">0</span></button>
+            </div>
+
+            <div class="place-bet">
+              <input type="number" id="betAmount" value="1000" min="100" />
+              <button id="placeBetBtn">CƯỢC</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="chat-panel">
+        <div class="chat-window" id="chatWindow"></div>
+        <div class="chat-input">
+          <input id="chatMessage" placeholder="Nhập nội dung chat..." />
+          <button id="sendChat">Gửi</button>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Modals login/register -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modalTitle">Đăng nhập</h3>
+      <input id="mUsername" placeholder="Tên đăng nhập" />
+      <input id="mPassword" type="password" placeholder="Mật khẩu" />
+      <button id="modalSubmit">OK</button>
+      <button id="modalClose">Đóng</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
