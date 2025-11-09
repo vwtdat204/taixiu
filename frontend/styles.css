@@ -1,0 +1,40 @@
+:root{
+  --bg:#0b0b12;
+  --panel:#0f1720;
+  --accent:#0f86d4;
+  --gold:#f6c24a;
+  --muted:#bfc7d1;
+}
+*{box-sizing:border-box;font-family:Inter,Arial,Helvetica,sans-serif}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#07070a 0%, #0d1220 100%);color:#fff}
+.container{display:flex;flex-direction:column;height:100vh}
+header{display:flex;justify-content:space-between;padding:12px 20px;align-items:center}
+.top-left button{margin-right:8px;padding:8px 12px;border-radius:6px;background:#111827;border:1px solid #2b3440;color:#fff}
+.top-right span{margin-left:12px}
+main{display:flex;flex:1;gap:16px;padding:10px}
+.left-panel{width:80px;display:flex;flex-direction:column;gap:10px}
+.left-panel button{padding:10px;border-radius:6px;background:linear-gradient(180deg,#a65a00,#6b3a00);border:none;color:#fff}
+.game-area{flex:1;display:flex;align-items:center;justify-content:center}
+.table{width:720px;height:460px;background:linear-gradient(180deg,#06202a,#03202a);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;position:relative}
+.center-circle{width:480px;height:360px;background:linear-gradient(180deg,#083b55,#042b3d);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:16px}
+.circle-bg{width:260px;height:260px;border-radius:50%;background:linear-gradient(180deg,#0f74aa,#05394e);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 6px 20px rgba(0,0,0,.6)}
+.dice-sum{font-size:36px;font-weight:700}
+.result-badge{margin-top:8px;padding:6px 10px;background:rgba(0,0,0,.2);border-radius:8px}
+.bet-buttons{display:flex;gap:20px;margin-top:18px}
+.bet{padding:10px 20px;border-radius:8px;background:linear-gradient(180deg,#164f37,#0f3a2b);border:2px solid rgba(255,255,255,0.06);color:#fff;font-weight:700}
+.bet[data-choice="TAI"]{background:linear-gradient(180deg,#1a6fb8,#0f4b87)}
+.bet[data-choice="XIU"]{background:linear-gradient(180deg,#8a2f2f,#5b1b1b)}
+.place-bet{display:flex;gap:8px;margin-top:12px}
+.place-bet input{padding:8px;border-radius:6px;border:none}
+.place-bet button{padding:8px 12px;border-radius:6px;background:var(--gold);border:none;color:#000;font-weight:700}
+
+.chat-panel{width:320px;background:linear-gradient(180deg,#0b1115,#061015);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.chat-window{flex:1;overflow:auto;padding:8px;border-radius:6px;background:rgba(255,255,255,0.02)}
+.chat-window .msg{padding:6px 8px;margin-bottom:6px;border-radius:6px;background:rgba(255,255,255,0.02)}
+.chat-input{display:flex;gap:8px}
+.chat-input input{flex:1;padding:8px;border-radius:6px;border:none}
+.chat-input button{padding:8px 10px;border-radius:6px;background:#0f86d4;border:none;color:#fff}
+
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+.modal.hidden{display:none}
+.modal-content{background:#0c1620;padding:20px;border-radius:8px;width:300px;display:flex;flex-direction:column;gap:8px}
