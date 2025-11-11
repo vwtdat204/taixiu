@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Món quà cho người yêu ❤️</title>
+<style>
+  body {
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background: radial-gradient(circle at top, #ffdee9, #b5fffc);
+    overflow:hidden;
+    font-family: 'Arial', sans-serif;
+  }
+
+  /* Bông hoa */
+  .flower {
+    width:150px;
+    height:150px;
+    background: url('rose.png') no-repeat center/contain;
+    opacity:0;
+    transform: scale(0);
+    animation: bloom 2s forwards;
+  }
+
+  @keyframes bloom {
+    0% { opacity:0; transform: scale(0); }
+    60% { opacity:1; transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  /* Thông điệp */
+  .message {
+    margin-top:20px;
+    font-size:28px;
+    color:#ff0066;
+    text-align:center;
+    opacity:0;
+    animation: fadeBounce 3s forwards;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+  }
+
+  @keyframes fadeBounce {
+    0% { opacity:0; transform: translateY(-20px); }
+    60% { opacity:1; transform: translateY(10px); }
+    100% { transform: translateY(0); }
+  }
+
+  /* Tim bay */
+  .heart {
+    position:absolute;
+    font-size:24px;
+    animation: floatHeart 4s linear infinite;
+    pointer-events:none;
+  }
+
+  @keyframes floatHeart {
+    0% { transform: translateY(0) scale(1) rotate(0deg); opacity:1; }
+    100% { transform: translateY(-600px) scale(0.5) rotate(360deg); opacity:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="flower"></div>
+<div class="message">Em yêu à, đây là món quà nhỏ dành cho em ❤️</div>
+
+<!-- Audio lãng mạn -->
+<audio id="music" src="romantic.mp3" autoplay loop></audio>
+
+<script>
+  // Tạo tim bay nhiều màu
+  const colors = ['#ff0066','#ff66cc','#ff3399','#ff99cc','#ff3399'];
+  function createHeart() {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.textContent = '❤️';
+    heart.style.left = Math.random() * window.innerWidth + 'px';
+    heart.style.color = colors[Math.floor(Math.random() * colors.length)];
+    heart.style.fontSize = (15 + Math.random()*20) + 'px';
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 4000);
+  }
+  setInterval(createHeart, 300);
+</script>
+
+</body>
+</html>
