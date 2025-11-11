@@ -2,53 +2,30 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>🎲 Game Tài Xỉu Demo 3D</title>
+<title>🎲 Tài Xỉu 3D Casino Demo</title>
 <style>
-body { margin:0; padding:0; font-family:sans-serif; background:#0b0b0b; color:#fff; text-align:center;}
-.container { max-width:900px; margin:0 auto; padding:20px;}
-h1 { margin-bottom:10px;}
-button { padding:10px 20px; margin:5px; font-size:16px; cursor:pointer; border:none; border-radius:5px;}
-input, select { padding:8px; margin:5px; border-radius:4px; border:none; }
-.login-section, .game-section { margin-top:20px; }
-.dice-table { display:inline-block; perspective:1000px; margin:20px; position:relative; width:120px; height:120px; }
-.dice { width:100px; height:100px; background:#fff; color:#000; font-size:40px;
-       position:absolute; top:10px; left:10px; display:flex; justify-content:center; align-items:center;
-       transform-style: preserve-3d; border-radius:10px; transition: transform 1s cubic-bezier(0.4,0,0.2,1);}
-.dice-face { position:absolute; width:100px; height:100px; display:flex; justify-content:center; align-items:center; font-size:40px;}
-.cup { width:130px; height:130px; background:#660000; border-radius:50% / 25%; position:absolute; top:-5px; left:-5px;
-       transform-origin:center center; transition: transform 1s ease; z-index:10;}
-.history { text-align:left; max-height:200px; overflow-y:auto; margin-top:20px; border-top:1px solid #555; padding-top:10px;}
+body { margin:0; overflow:hidden; font-family:sans-serif; background:#0b0b0b; color:#fff;}
+.ui { position:absolute; top:10px; left:10px; z-index:10; }
+.ui input, .ui button { margin:5px; padding:8px; border-radius:4px; border:none; }
 .balance { font-weight:bold; margin-top:10px;}
+.history { max-height:150px; overflow-y:auto; margin-top:10px; background:rgba(0,0,0,0.5); padding:5px; border-radius:5px;}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>🎲 Game Tài Xỉu Demo 3D</h1>
-  
-  <div class="login-section">
+<div class="ui">
+  <div id="loginSection">
     <input type="text" id="username" placeholder="Tên đăng nhập">
     <input type="password" id="password" placeholder="Mật khẩu">
     <button onclick="register()">Đăng ký</button>
     <button onclick="login()">Đăng nhập</button>
     <div id="loginMsg"></div>
   </div>
-  
-  <div class="game-section" style="display:none;">
+  <div id="gameUI" style="display:none;">
     <div class="balance">Số dư: <span id="balance">0</span> ₫</div>
-    <div>
-      Cược: <input type="number" id="betAmount" value="100" min="1"> ₫
-    </div>
-    <div>
-      <button onclick="placeBet('Tài')">Tài</button>
-      <button onclick="placeBet('Xỉu')">Xỉu</button>
-    </div>
-    <div class="dice-table">
-      <div class="cup" id="cup"></div>
-      <div class="dice" id="dice1">🎲</div>
-      <div class="dice" id="dice2">🎲</div>
-      <div class="dice" id="dice3">🎲</div>
-    </div>
-    <div><button onclick="rollDice()">Quay xúc xắc</button></div>
+    <div>Cược: <input type="number" id="betAmount" value="100" min="1"> ₫</div>
+    <button onclick="placeBet('Tài')">Tài</button>
+    <button onclick="placeBet('Xỉu')">Xỉu</button>
+    <button onclick="rollDice()">Quay xúc xắc</button>
     <div>Kết quả: <span id="result">-</span></div>
     <div class="history" id="history"></div>
   </div>
@@ -57,124 +34,166 @@ input, select { padding:8px; margin:5px; border-radius:4px; border:none; }
 <audio id="soundDice" src="https://www.myinstants.com/media/sounds/dice.mp3"></audio>
 <audio id="soundCup" src="https://www.myinstants.com/media/sounds/cup.mp3"></audio>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/TextureLoader.js"></script>
+
 <script>
 // ======== USER SYSTEM =========
-let currentUser = null;
-const usersKey = "tx_demo_users";
+let currentUser=null;
+const usersKey="tx_demo_users";
+function getUsers(){ return JSON.parse(localStorage.getItem(usersKey)||'{}'); }
+function saveUsers(users){ localStorage.setItem(usersKey,JSON.stringify(users)); }
+function hashPassword(pw){ return btoa(pw); }
 
-function getUsers() { return JSON.parse(localStorage.getItem(usersKey) || '{}'); }
-function saveUsers(users) { localStorage.setItem(usersKey, JSON.stringify(users)); }
-function hashPassword(pw) { return btoa(pw); }
-
-function register() {
-  const name = document.getElementById('username').value.trim();
-  const pw = document.getElementById('password').value;
-  if(!name || !pw) { alert("Nhập đủ thông tin"); return; }
-  let users = getUsers();
-  if(users[name]) { alert("User đã tồn tại"); return; }
-  users[name] = { pw: hashPassword(pw), balance:1000, history:[] };
-  saveUsers(users);
-  alert("Đăng ký thành công! Đăng nhập để chơi");
+function register(){
+  const name=document.getElementById('username').value.trim();
+  const pw=document.getElementById('password').value;
+  if(!name||!pw){ alert("Nhập đủ thông tin"); return; }
+  let users=getUsers();
+  if(users[name]){ alert("User đã tồn tại"); return; }
+  users[name]={pw:hashPassword(pw), balance:1000, history:[]};
+  saveUsers(users); alert("Đăng ký thành công!");
 }
-
-function login() {
-  const name = document.getElementById('username').value.trim();
-  const pw = document.getElementById('password').value;
-  let users = getUsers();
-  if(!users[name] || users[name].pw !== hashPassword(pw)) {
-    alert("Sai tên đăng nhập hoặc mật khẩu"); return;
-  }
-  currentUser = name;
-  document.getElementById('loginMsg').innerText = "Đăng nhập thành công: " + name;
-  document.querySelector('.login-section').style.display = "none";
-  document.querySelector('.game-section').style.display = "block";
+function login(){
+  const name=document.getElementById('username').value.trim();
+  const pw=document.getElementById('password').value;
+  let users=getUsers();
+  if(!users[name]||users[name].pw!==hashPassword(pw)){ alert("Sai tên đăng nhập hoặc mật khẩu"); return; }
+  currentUser=name;
+  document.getElementById('loginSection').style.display='none';
+  document.getElementById('gameUI').style.display='block';
   updateBalance(); renderHistory();
 }
 
 // ======== GAME LOGIC =========
-let currentBet = null;
-let autoRollInterval = null;
-
-function updateBalance() {
-  const users = getUsers();
-  document.getElementById('balance').innerText = users[currentUser].balance;
-}
-
-function renderHistory() {
-  const users = getUsers();
-  const histEl = document.getElementById('history');
-  histEl.innerHTML = "";
-  users[currentUser].history.slice().reverse().forEach(h => {
-    const div = document.createElement('div');
-    div.textContent = `Cược: ${h.bet} ${h.amount} ₫, Kết quả: ${h.result}, Tổng: ${h.total}, Thắng: ${h.win} ₫`;
+let currentBet=null;
+let autoRollInterval=null;
+function updateBalance(){ const users=getUsers(); document.getElementById('balance').innerText=users[currentUser].balance; }
+function renderHistory(){
+  const users=getUsers();
+  const histEl=document.getElementById('history');
+  histEl.innerHTML="";
+  users[currentUser].history.slice().reverse().forEach(h=>{
+    const div=document.createElement('div');
+    div.textContent=`Cược: ${h.bet} ${h.amount} ₫, KQ: ${h.result}, Tổng: ${h.total}, Thắng: ${h.win} ₫`;
     histEl.appendChild(div);
   });
 }
+function placeBet(choice){ currentBet=choice; alert("Đặt cược: "+choice); }
 
-function placeBet(choice) {
-  currentBet = choice;
-  alert("Bạn đã đặt cược: " + choice);
+// ======== THREE.JS 3D SCENE =========
+let scene,camera,renderer,controls;
+let diceMeshes=[],cupMesh,diceTextures=[];
+initThree(); animate();
+
+function initThree(){
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0b0b0b);
+  camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.set(0,5,8);
+
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enablePan=false; controls.enableZoom=true;
+
+  // lights
+  const ambient=new THREE.AmbientLight(0xffffff,0.6);
+  scene.add(ambient);
+  const spot=new THREE.SpotLight(0xffddaa,1);
+  spot.position.set(5,10,5); spot.castShadow=true;
+  scene.add(spot);
+
+  // floor (bàn casino)
+  const floorMat=new THREE.MeshStandardMaterial({color:0x552200});
+  const floorGeo=new THREE.PlaneGeometry(20,20);
+  const floor=new THREE.Mesh(floorGeo,floorMat); floor.rotation.x=-Math.PI/2; scene.add(floor);
+
+  // cup 3D
+  const cupGeo=new THREE.CylinderGeometry(1.5,1.5,1,32,true);
+  const cupMat=new THREE.MeshStandardMaterial({color:0x660000, side:THREE.DoubleSide, transparent:true, opacity:0.8});
+  cupMesh=new THREE.Mesh(cupGeo,cupMat); cupMesh.position.y=1; scene.add(cupMesh);
+
+  // dice textures
+  const loader=new THREE.TextureLoader();
+  for(let i=1;i<=6;i++){
+    diceTextures.push(loader.load(`https://i.imgur.com/${[1,2,3,4,5,6][i-1]}.png`)); // placeholder
+  }
+
+  // dice
+  const diceGeo=new THREE.BoxGeometry(1,1,1);
+  for(let i=0;i<3;i++){
+    const materials=[
+      new THREE.MeshStandardMaterial({map:diceTextures[0]}),
+      new THREE.MeshStandardMaterial({map:diceTextures[1]}),
+      new THREE.MeshStandardMaterial({map:diceTextures[2]}),
+      new THREE.MeshStandardMaterial({map:diceTextures[3]}),
+      new THREE.MeshStandardMaterial({map:diceTextures[4]}),
+      new THREE.MeshStandardMaterial({map:diceTextures[5]}),
+    ];
+    const dice=new THREE.Mesh(diceGeo,materials);
+    dice.position.set(i-1,0.5,0);
+    scene.add(dice); diceMeshes.push(dice);
+  }
 }
 
-// ======== DICE & CUP ANIMATION =========
-function rollDice() {
-  const betAmount = parseInt(document.getElementById('betAmount').value) || 100;
-  if(!currentBet) { alert("Vui lòng đặt cược"); return; }
-  const users = getUsers();
+function animate(){ requestAnimationFrame(animate); renderer.render(scene,camera); }
+
+// ======== DICE ROLL =========
+function rollDice(){
+  const betAmount=parseInt(document.getElementById('betAmount').value)||100;
+  if(!currentBet){ alert("Vui lòng đặt cược"); return; }
+  const users=getUsers();
   if(users[currentUser].balance<betAmount){ alert("Không đủ số dư"); return; }
 
-  document.getElementById('result').innerText = "-";
-  const cup = document.getElementById('cup');
-  cup.style.transform="rotateX(0deg)"; // cup úp
-  document.getElementById('soundCup').play();
+  document.getElementById('result').innerText="-";
+  cupMesh.rotation.x=0; document.getElementById('soundCup').play();
 
-  const diceEls = [document.getElementById('dice1'),document.getElementById('dice2'),document.getElementById('dice3')];
-  diceEls.forEach(d => { d.innerText="🎲"; });
-
-  // shake dice
-  let rolls=[]; let count=0;
-  const shakeInterval = setInterval(()=> {
-    rolls = [1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6)];
-    diceEls[0].innerText=rolls[0];
-    diceEls[1].innerText=rolls[1];
-    diceEls[2].innerText=rolls[2];
-    diceEls.forEach((d,i)=>d.style.transform=`rotateX(${Math.random()*720}deg) rotateY(${Math.random()*720}deg)`);
-    count++;
-    if(count>=20){ clearInterval(shakeInterval);
-      setTimeout(()=>{ cup.style.transform="rotateX(-180deg)"; showResult(rolls, betAmount); },500);
+  let rolls=[],count=0;
+  const interval=setInterval(()=>{
+    rolls=[1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6)];
+    diceMeshes.forEach((d,i)=>{
+      d.rotation.x=Math.random()*10; d.rotation.y=Math.random()*10; d.position.y=0.5+Math.random()*0.2;
+    });
+    count++; if(count>=20){
+      clearInterval(interval);
+      setTimeout(()=>{ cupMesh.rotation.x=-Math.PI; showResult(rolls,betAmount); },500);
     }
   },100);
   document.getElementById('soundDice').play();
 }
 
-function showResult(rolls, betAmount){
-  const total = rolls.reduce((a,b)=>a+b,0);
-  let resultText = "";
+function showResult(rolls,betAmount){
+  const total=rolls.reduce((a,b)=>a+b,0);
+  let resultText="";
   if(rolls[0]==rolls[1] && rolls[1]==rolls[2]) resultText="Triple - Thua tất cả";
-  else resultText = (total>=11 && total<=17) ? "Tài" : "Xỉu";
+  else resultText=(total>=11 && total<=17)?"Tài":"Xỉu";
 
   document.getElementById('result').innerText=resultText;
 
   const users=getUsers();
-  let win=0;
-  if(resultText===currentBet) win=betAmount;
-  users[currentUser].balance += win - (win===0?betAmount:0);
+  let win=0; if(resultText===currentBet) win=betAmount;
+  users[currentUser].balance+=win-(win===0?betAmount:0);
   users[currentUser].history.push({bet:currentBet,amount:betAmount,result:resultText,total,win});
   saveUsers(users); updateBalance(); renderHistory();
   currentBet=null;
 }
 
 // ======== AUTO ROLL =========
-function startAutoRoll() {
-  autoRollInterval = setInterval(()=>{
+function startAutoRoll(){
+  autoRollInterval=setInterval(()=>{
     if(currentUser){
       currentBet=["Tài","Xỉu"][Math.floor(Math.random()*2)];
-      document.getElementById('betAmount').value = 100+Math.floor(Math.random()*400); // random bet demo
+      document.getElementById('betAmount').value=100+Math.floor(Math.random()*400);
       rollDice();
     }
   },30000);
 }
 startAutoRoll();
+window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); });
 </script>
 </body>
 </html>
