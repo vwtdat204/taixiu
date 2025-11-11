@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Game Tài Xỉu Demo</title>
+<style>
+  body { font-family: sans-serif; background: #0b0b0b; color: #fff; text-align: center; margin:0; padding:0;}
+  .container { max-width: 800px; margin: 0 auto; padding: 20px;}
+  h1 { margin-bottom: 10px; }
+  button { padding: 10px 20px; margin: 5px; font-size:16px; cursor:pointer; border:none; border-radius:5px;}
+  .login-section, .game-section { margin-top:20px; }
+  input { padding:8px; margin:5px; border-radius:4px; border:none; }
+  .dice-container { perspective:1000px; display:inline-block; margin:20px; }
+  .dice { width:80px; height:80px; background:#fff; color:#000; font-size:40px;
+          display:flex; justify-content:center; align-items:center; margin:5px;
+          transform-style: preserve-3d; transition: transform 1s ease-in-out; border-radius:10px; }
+  .dice-face { position:absolute; width:80px; height:80px; display:flex; justify-content:center; align-items:center; }
+  .history { text-align:left; max-height:200px; overflow-y:auto; margin-top:20px; border-top:1px solid #555; padding-top:10px;}
+  .balance { font-weight:bold; margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎲 Game Tài Xỉu Demo</h1>
+  
+  <div class="login-section">
+    <input type="text" id="username" placeholder="Tên đăng nhập">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button onclick="register()">Đăng ký</button>
+    <button onclick="login()">Đăng nhập</button>
+    <div id="loginMsg"></div>
+  </div>
+  
+  <div class="game-section" style="display:none;">
+    <div class="balance">Số dư: <span id="balance">0</span> ₫</div>
+    <div>
+      <button onclick="placeBet('Tài')">Tài</button>
+      <button onclick="placeBet('Xỉu')">Xỉu</button>
+    </div>
+    <div class="dice-container">
+      <div class="dice" id="dice1">🎲</div>
+      <div class="dice" id="dice2">🎲</div>
+      <div class="dice" id="dice3">🎲</div>
+    </div>
+    <div><button onclick="rollDice()">Quay xúc xắc</button></div>
+    <div>Kết quả: <span id="result">-</span></div>
+    <div class="history" id="history"></div>
+  </div>
+</div>
+
+<audio id="soundDice" src="https://www.myinstants.com/media/sounds/dice.mp3"></audio>
+<audio id="soundCup" src="https://www.myinstants.com/media/sounds/cup.mp3"></audio>
+
+<script>
+// ======== USER SYSTEM =========
+let currentUser = null;
+const usersKey = "tx_demo_users";
+
+function getUsers() {
+  return JSON.parse(localStorage.getItem(usersKey) || '{}');
+}
+
+function saveUsers(users) {
+  localStorage.setItem(usersKey, JSON.stringify(users));
+}
+
+function hashPassword(pw) {
+  // đơn giản demo
+  return btoa(pw);
+}
+
+function register() {
+  const name = document.getElementById('username').value.trim();
+  const pw = document.getElementById('password').value;
+  if(!name || !pw) { alert("Nhập đủ thông tin"); return; }
+  let users = getUsers();
+  if(users[name]) { alert("User đã tồn tại"); return; }
+  users[name] = { pw: hashPassword(pw), balance:1000, history:[] };
+  saveUsers(users);
+  alert("Đăng ký thành công! Đăng nhập để chơi");
+}
+
+function login() {
+  const name = document.getElementById('username').value.trim();
+  const pw = document.getElementById('password').value;
+  let users = getUsers();
+  if(!users[name] || users[name].pw !== hashPassword(pw)) {
+    alert("Sai tên đăng nhập hoặc mật khẩu");
+    return;
+  }
+  currentUser = name;
+  document.getElementById('loginMsg').innerText = "Đăng nhập thành công: " + name;
+  document.querySelector('.login-section').style.display = "none";
+  document.querySelector('.game-section').style.display = "block";
+  updateBalance();
+  renderHistory();
+}
+
+// ======== GAME LOGIC =========
+let currentBet = null;
+let autoRollInterval = null;
+
+function updateBalance() {
+  const users = getUsers();
+  document.getElementById('balance').innerText = users[currentUser].balance;
+}
+
+function renderHistory() {
+  const users = getUsers();
+  const histEl = document.getElementById('history');
+  histEl.innerHTML = "";
+  users[currentUser].history.slice().reverse().forEach(h => {
+    const div = document.createElement('div');
+    div.textContent = `Cược: ${h.bet}, Kết quả: ${h.result}, Tổng: ${h.total}, Thắng: ${h.win}`;
+    histEl.appendChild(div);
+  });
+}
+
+function placeBet(choice) {
+  currentBet = choice;
+  alert("Bạn đã đặt cược: " + choice);
+}
+
+// ======== DICE ANIMATION =========
+function rollDice() {
+  if(!currentBet) { alert("Vui lòng đặt cược"); return; }
+  document.getElementById('result').innerText = "-";
+  document.getElementById('soundCup').play();
+  const diceEls = [document.getElementById('dice1'), document.getElementById('dice2'), document.getElementById('dice3')];
+  diceEls.forEach(d => { d.innerText = "🎲"; });
+  
+  // shake dice
+  let rolls = [];
+  let count = 0;
+  const shakeInterval = setInterval(()=> {
+    rolls = [1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6)];
+    diceEls[0].innerText = rolls[0];
+    diceEls[1].innerText = rolls[1];
+    diceEls[2].innerText = rolls[2];
+    count++;
+    if(count>=15) { clearInterval(shakeInterval); showResult(rolls); }
+  }, 100);
+  document.getElementById('soundDice').play();
+}
+
+function showResult(rolls) {
+  const total = rolls.reduce((a,b)=>a+b,0);
+  let resultText = "";
+  if(rolls[0]==rolls[1] && rolls[1]==rolls[2]) resultText="Triple - Thua tất cả";
+  else resultText = (total>=11 && total<=17) ? "Tài" : "Xỉu";
+
+  document.getElementById('result').innerText = resultText;
+  
+  // update user balance
+  const users = getUsers();
+  let win = 0;
+  if(resultText===currentBet) win = 100;
+  users[currentUser].balance += win - (win===0?100:0);
+  users[currentUser].history.push({bet:currentBet,result:resultText,total,total,win});
+  saveUsers(users);
+  updateBalance();
+  renderHistory();
+  currentBet = null;
+}
+
+// ======== AUTO ROLL =========
+function startAutoRoll() {
+  autoRollInterval = setInterval(()=> {
+    if(currentUser) {
+      currentBet = ["Tài","Xỉu"][Math.floor(Math.random()*2)];
+      rollDice();
+    }
+  },30000);
+}
+
+startAutoRoll();
+</script>
+</body>
+</html>
