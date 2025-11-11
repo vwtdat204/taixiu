@@ -2,26 +2,28 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Game Tài Xỉu Demo</title>
+<title>🎲 Game Tài Xỉu Demo 3D</title>
 <style>
-  body { font-family: sans-serif; background: #0b0b0b; color: #fff; text-align: center; margin:0; padding:0;}
-  .container { max-width: 800px; margin: 0 auto; padding: 20px;}
-  h1 { margin-bottom: 10px; }
-  button { padding: 10px 20px; margin: 5px; font-size:16px; cursor:pointer; border:none; border-radius:5px;}
-  .login-section, .game-section { margin-top:20px; }
-  input { padding:8px; margin:5px; border-radius:4px; border:none; }
-  .dice-container { perspective:1000px; display:inline-block; margin:20px; }
-  .dice { width:80px; height:80px; background:#fff; color:#000; font-size:40px;
-          display:flex; justify-content:center; align-items:center; margin:5px;
-          transform-style: preserve-3d; transition: transform 1s ease-in-out; border-radius:10px; }
-  .dice-face { position:absolute; width:80px; height:80px; display:flex; justify-content:center; align-items:center; }
-  .history { text-align:left; max-height:200px; overflow-y:auto; margin-top:20px; border-top:1px solid #555; padding-top:10px;}
-  .balance { font-weight:bold; margin-top:10px;}
+body { margin:0; padding:0; font-family:sans-serif; background:#0b0b0b; color:#fff; text-align:center;}
+.container { max-width:900px; margin:0 auto; padding:20px;}
+h1 { margin-bottom:10px;}
+button { padding:10px 20px; margin:5px; font-size:16px; cursor:pointer; border:none; border-radius:5px;}
+input, select { padding:8px; margin:5px; border-radius:4px; border:none; }
+.login-section, .game-section { margin-top:20px; }
+.dice-table { display:inline-block; perspective:1000px; margin:20px; position:relative; width:120px; height:120px; }
+.dice { width:100px; height:100px; background:#fff; color:#000; font-size:40px;
+       position:absolute; top:10px; left:10px; display:flex; justify-content:center; align-items:center;
+       transform-style: preserve-3d; border-radius:10px; transition: transform 1s cubic-bezier(0.4,0,0.2,1);}
+.dice-face { position:absolute; width:100px; height:100px; display:flex; justify-content:center; align-items:center; font-size:40px;}
+.cup { width:130px; height:130px; background:#660000; border-radius:50% / 25%; position:absolute; top:-5px; left:-5px;
+       transform-origin:center center; transition: transform 1s ease; z-index:10;}
+.history { text-align:left; max-height:200px; overflow-y:auto; margin-top:20px; border-top:1px solid #555; padding-top:10px;}
+.balance { font-weight:bold; margin-top:10px;}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🎲 Game Tài Xỉu Demo</h1>
+  <h1>🎲 Game Tài Xỉu Demo 3D</h1>
   
   <div class="login-section">
     <input type="text" id="username" placeholder="Tên đăng nhập">
@@ -34,10 +36,14 @@
   <div class="game-section" style="display:none;">
     <div class="balance">Số dư: <span id="balance">0</span> ₫</div>
     <div>
+      Cược: <input type="number" id="betAmount" value="100" min="1"> ₫
+    </div>
+    <div>
       <button onclick="placeBet('Tài')">Tài</button>
       <button onclick="placeBet('Xỉu')">Xỉu</button>
     </div>
-    <div class="dice-container">
+    <div class="dice-table">
+      <div class="cup" id="cup"></div>
       <div class="dice" id="dice1">🎲</div>
       <div class="dice" id="dice2">🎲</div>
       <div class="dice" id="dice3">🎲</div>
@@ -56,18 +62,9 @@
 let currentUser = null;
 const usersKey = "tx_demo_users";
 
-function getUsers() {
-  return JSON.parse(localStorage.getItem(usersKey) || '{}');
-}
-
-function saveUsers(users) {
-  localStorage.setItem(usersKey, JSON.stringify(users));
-}
-
-function hashPassword(pw) {
-  // đơn giản demo
-  return btoa(pw);
-}
+function getUsers() { return JSON.parse(localStorage.getItem(usersKey) || '{}'); }
+function saveUsers(users) { localStorage.setItem(usersKey, JSON.stringify(users)); }
+function hashPassword(pw) { return btoa(pw); }
 
 function register() {
   const name = document.getElementById('username').value.trim();
@@ -85,15 +82,13 @@ function login() {
   const pw = document.getElementById('password').value;
   let users = getUsers();
   if(!users[name] || users[name].pw !== hashPassword(pw)) {
-    alert("Sai tên đăng nhập hoặc mật khẩu");
-    return;
+    alert("Sai tên đăng nhập hoặc mật khẩu"); return;
   }
   currentUser = name;
   document.getElementById('loginMsg').innerText = "Đăng nhập thành công: " + name;
   document.querySelector('.login-section').style.display = "none";
   document.querySelector('.game-section').style.display = "block";
-  updateBalance();
-  renderHistory();
+  updateBalance(); renderHistory();
 }
 
 // ======== GAME LOGIC =========
@@ -111,7 +106,7 @@ function renderHistory() {
   histEl.innerHTML = "";
   users[currentUser].history.slice().reverse().forEach(h => {
     const div = document.createElement('div');
-    div.textContent = `Cược: ${h.bet}, Kết quả: ${h.result}, Tổng: ${h.total}, Thắng: ${h.win}`;
+    div.textContent = `Cược: ${h.bet} ${h.amount} ₫, Kết quả: ${h.result}, Tổng: ${h.total}, Thắng: ${h.win} ₫`;
     histEl.appendChild(div);
   });
 }
@@ -121,58 +116,64 @@ function placeBet(choice) {
   alert("Bạn đã đặt cược: " + choice);
 }
 
-// ======== DICE ANIMATION =========
+// ======== DICE & CUP ANIMATION =========
 function rollDice() {
+  const betAmount = parseInt(document.getElementById('betAmount').value) || 100;
   if(!currentBet) { alert("Vui lòng đặt cược"); return; }
+  const users = getUsers();
+  if(users[currentUser].balance<betAmount){ alert("Không đủ số dư"); return; }
+
   document.getElementById('result').innerText = "-";
+  const cup = document.getElementById('cup');
+  cup.style.transform="rotateX(0deg)"; // cup úp
   document.getElementById('soundCup').play();
-  const diceEls = [document.getElementById('dice1'), document.getElementById('dice2'), document.getElementById('dice3')];
-  diceEls.forEach(d => { d.innerText = "🎲"; });
-  
+
+  const diceEls = [document.getElementById('dice1'),document.getElementById('dice2'),document.getElementById('dice3')];
+  diceEls.forEach(d => { d.innerText="🎲"; });
+
   // shake dice
-  let rolls = [];
-  let count = 0;
+  let rolls=[]; let count=0;
   const shakeInterval = setInterval(()=> {
     rolls = [1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6),1+Math.floor(Math.random()*6)];
-    diceEls[0].innerText = rolls[0];
-    diceEls[1].innerText = rolls[1];
-    diceEls[2].innerText = rolls[2];
+    diceEls[0].innerText=rolls[0];
+    diceEls[1].innerText=rolls[1];
+    diceEls[2].innerText=rolls[2];
+    diceEls.forEach((d,i)=>d.style.transform=`rotateX(${Math.random()*720}deg) rotateY(${Math.random()*720}deg)`);
     count++;
-    if(count>=15) { clearInterval(shakeInterval); showResult(rolls); }
-  }, 100);
+    if(count>=20){ clearInterval(shakeInterval);
+      setTimeout(()=>{ cup.style.transform="rotateX(-180deg)"; showResult(rolls, betAmount); },500);
+    }
+  },100);
   document.getElementById('soundDice').play();
 }
 
-function showResult(rolls) {
+function showResult(rolls, betAmount){
   const total = rolls.reduce((a,b)=>a+b,0);
   let resultText = "";
   if(rolls[0]==rolls[1] && rolls[1]==rolls[2]) resultText="Triple - Thua tất cả";
   else resultText = (total>=11 && total<=17) ? "Tài" : "Xỉu";
 
-  document.getElementById('result').innerText = resultText;
-  
-  // update user balance
-  const users = getUsers();
-  let win = 0;
-  if(resultText===currentBet) win = 100;
-  users[currentUser].balance += win - (win===0?100:0);
-  users[currentUser].history.push({bet:currentBet,result:resultText,total,total,win});
-  saveUsers(users);
-  updateBalance();
-  renderHistory();
-  currentBet = null;
+  document.getElementById('result').innerText=resultText;
+
+  const users=getUsers();
+  let win=0;
+  if(resultText===currentBet) win=betAmount;
+  users[currentUser].balance += win - (win===0?betAmount:0);
+  users[currentUser].history.push({bet:currentBet,amount:betAmount,result:resultText,total,win});
+  saveUsers(users); updateBalance(); renderHistory();
+  currentBet=null;
 }
 
 // ======== AUTO ROLL =========
 function startAutoRoll() {
-  autoRollInterval = setInterval(()=> {
-    if(currentUser) {
-      currentBet = ["Tài","Xỉu"][Math.floor(Math.random()*2)];
+  autoRollInterval = setInterval(()=>{
+    if(currentUser){
+      currentBet=["Tài","Xỉu"][Math.floor(Math.random()*2)];
+      document.getElementById('betAmount').value = 100+Math.floor(Math.random()*400); // random bet demo
       rollDice();
     }
   },30000);
 }
-
 startAutoRoll();
 </script>
 </body>
