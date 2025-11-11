@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Món quà nhỏ cho em ❤️</title>
+<style>
+  body {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    background:#ffe6f0;
+    font-family: 'Arial', sans-serif;
+    overflow:hidden;
+    flex-direction:column;
+  }
+
+  .flower {
+    font-size:100px;
+    animation: bloom 2s ease-in-out forwards;
+  }
+
+  @keyframes bloom {
+    0% { transform: scale(0); opacity:0; }
+    100% { transform: scale(1); opacity:1; }
+  }
+
+  .message {
+    margin-top:20px;
+    font-size:24px;
+    color:#e60073;
+    text-align:center;
+    animation: fade 3s ease-in forwards;
+    opacity:0;
+  }
+
+  @keyframes fade {
+    0% { opacity:0; }
+    100% { opacity:1; }
+  }
+
+  .heart {
+    position:absolute;
+    font-size:20px;
+    animation: floatHeart 4s linear infinite;
+  }
+
+  @keyframes floatHeart {
+    0% { transform: translateY(0) scale(1); opacity:1; }
+    100% { transform: translateY(-600px) scale(0.5); opacity:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="flower">🌹</div>
+<div class="message">Em yêu à, mã hoa này dành cho em ❤️</div>
+
+<script>
+  // tạo tim bay lên
+  function createHeart() {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.textContent = '❤️';
+    heart.style.left = Math.random() * window.innerWidth + 'px';
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 4000);
+  }
+
+  setInterval(createHeart, 300);
+</script>
+
+</body>
+</html>
